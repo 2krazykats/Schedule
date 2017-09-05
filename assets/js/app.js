@@ -13,7 +13,7 @@ $(document).ready(function() {
 
     var database = firebase.database();
 
-    database.ref().remove();
+    // database.ref().remove();
 
     $("#add-train-btn").on("click", function() {
         	event.preventDefault();
@@ -32,12 +32,32 @@ $(document).ready(function() {
             train: trainName,
             dest: destination,
             time: trainTimeM,
-            freq: frequency
+            freq: frequency,
         }
 
         // Push the data to Firebase
         database.ref().push(train);
 
+
+        // Create an array of all train times
+                var trainTimes = [];
+             
+        // Calculate how many trains run in a day
+        var numberOfTrips = Math.floor(1440/frequency);
+
+        for (var i=0; i<numberOfTrips; i++) {
+            // if (trainTimeM < currentTime) {
+
+            var eachTrainTime = moment(trainTimeM, "HH:mm").add(frequency, 'minutes').format('HH:mm');
+            var nextFrequency = frequency * i;
+            eachTrainTime = moment(trainTimeM, "HH:mm").add(nextFrequency, 'minutes').format('HH:mm');
+               console.log(nextFrequency);
+             trainTimes.push(eachTrainTime);
+            // } 
+        }
+
+            console.log(eachTrainTime);
+      
         // Retrieve the data from Firebase
         database.ref().on("child_added", function(childSnapshot, prevChildName) {
 
@@ -45,39 +65,35 @@ $(document).ready(function() {
             destination = childSnapshot.val().dest;
             trainTimeM = childSnapshot.val().time;
             frequency = childSnapshot.val().freq;
-
         })
 
-        // if (moment(trainTimeM).isValid()) {
-        //     console.log(trainTimeM);
-        // } else console.log("Not valid") ;
+
+        // trainTimes.push(trainTimeM);
+        // var nextTime = moment(trainTimeM, "HH:mm").add(frequency, 'minutes').format('HH:mm');
 
         // Calculate the Next Arrival Time
         var currentTime = moment().format("HH:mm");
+        var nextArrTime;
 
-
-        if (trainTimeM < currentTime) {
-            var nextTime = moment(trainTimeM, "HH:mm").add(frequency, 'minutes').format('HH:mm');
-            // var nextTime = moment(trainTimeM, "HH:mm").format("HH:mm");
-            trainTimeM++;
+        for (var i=0; i < trainTimes.length; i++) {
+            if (moment(trainTimes[i], "HH:mm").isBefore(moment(currentTime, "HH:mm"))) {
+                console.log(trainTimes[i]);
+            } else {
+                nextArrTime = trainTimes[i];
+                break;
+            }
         }
 
-        console.log(nextTime);
-
-        // Get the different between the start time and now
-
-        // var diffTime = moment().diff(trainTime, now);
-
-        // console.log(diffTime);
+        console.log(nextArrTime);
 
 
         // console.log(now);
-        // var minutesAway = moment(nextTime).subtract(currentTime, "minutes");
-        var minutesAway = moment(nextTime, "HH:mm").from(currentTime);
+        // var minutesAway = moment(nextArrTime, "HH:mm").fromNow("minutes");
+        var minutesAway = moment(nextArrTime, "HH:mm").diff(moment(), "minutes");
 
 
         // Display the data in a table
-        $("#train-table").append(`<tr><td>${trainName}</td><td>${destination}</td><td>${frequency}</td><td>${nextTime}</td><td>${minutesAway}</td></tr>`);
+        $("#train-table").append(`<tr><td>${trainName}</td><td>${destination}</td><td>${frequency}</td><td>${nextArrTime}</td><td>${minutesAway}</td></tr>`);
     })
 
 
