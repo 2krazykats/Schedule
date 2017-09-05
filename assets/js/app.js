@@ -13,7 +13,7 @@ $(document).ready(function() {
 
     var database = firebase.database();
 
-    // database.ref().remove();
+    database.ref().remove();
 
     $("#add-train-btn").on("click", function() {
         	event.preventDefault();
@@ -24,8 +24,8 @@ $(document).ready(function() {
         var trainTime = $("#time-input").val().trim();
         var frequency = $("#frequency-input").val().trim();
 
-        // Convert the value we take into a moment() value
 
+        // Convert the value we take into a moment() value
         var trainTimeM = moment(trainTime, "HH:mm").format("HH:mm");
 
         var train = {
@@ -40,7 +40,7 @@ $(document).ready(function() {
 
 
         // Create an array of all train times
-                var trainTimes = [];
+            var trainTimes = [];
              
         // Calculate how many trains run in a day
         var numberOfTrips = Math.floor(1440/frequency);
@@ -94,7 +94,13 @@ $(document).ready(function() {
 
         // Display the data in a table
         $("#train-table").append(`<tr><td>${trainName}</td><td>${destination}</td><td>${frequency}</td><td>${nextArrTime}</td><td>${minutesAway}</td></tr>`);
-    })
+    
+        // Reset the input fields
+        $("#train-name-input").val('');
+        $("#destination-input").val('');
+        $("#time-input").val('');
+        $("#frequency-input").val('');
+})
 
 
 });
