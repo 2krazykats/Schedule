@@ -13,7 +13,7 @@ $(document).ready(function() {
 
     var database = firebase.database();
 
-    database.ref().remove();
+    // database.ref().remove();
 
     $("#add-train-btn").on("click", function() {
         	event.preventDefault();
@@ -27,17 +27,8 @@ $(document).ready(function() {
 
         // Convert the value we take into a moment() value
         var trainTimeM = moment(trainTime, "HH:mm").format("HH:mm");
-
-        var train = {
-            train: trainName,
-            dest: destination,
-            time: trainTimeM,
-            freq: frequency,
-        }
-
-        // Push the data to Firebase
-        database.ref().push(train);
-
+        var nextArrTime = 0;
+        // var minutesAway = 0;
 
         // Create an array of all train times
             var trainTimes = [];
@@ -46,26 +37,14 @@ $(document).ready(function() {
         var numberOfTrips = Math.floor(1440/frequency);
 
         for (var i=0; i<numberOfTrips; i++) {
-            // if (trainTimeM < currentTime) {
 
             var eachTrainTime = moment(trainTimeM, "HH:mm").add(frequency, 'minutes').format('HH:mm');
             var nextFrequency = frequency * i;
             eachTrainTime = moment(trainTimeM, "HH:mm").add(nextFrequency, 'minutes').format('HH:mm');
                console.log(nextFrequency);
              trainTimes.push(eachTrainTime);
-            // } 
+
         }
-
-            console.log(eachTrainTime);
-      
-        // Retrieve the data from Firebase
-        database.ref().on("child_added", function(childSnapshot, prevChildName) {
-
-            trainName = childSnapshot.val().train;
-            destination = childSnapshot.val().dest;
-            trainTimeM = childSnapshot.val().time;
-            frequency = childSnapshot.val().freq;
-        })
 
 
         // trainTimes.push(trainTimeM);
@@ -73,7 +52,6 @@ $(document).ready(function() {
 
         // Calculate the Next Arrival Time
         var currentTime = moment().format("HH:mm");
-        var nextArrTime;
 
         for (var i=0; i < trainTimes.length; i++) {
             if (moment(trainTimes[i], "HH:mm").isBefore(moment(currentTime, "HH:mm"))) {
@@ -86,10 +64,21 @@ $(document).ready(function() {
 
         console.log(nextArrTime);
 
-
-        // console.log(now);
         // var minutesAway = moment(nextArrTime, "HH:mm").fromNow("minutes");
-        var minutesAway = moment(nextArrTime, "HH:mm").diff(moment(), "minutes");
+       var minutesAway = moment(nextArrTime, "HH:mm").diff(moment(), "minutes");
+
+        var train = {
+            train: trainName,
+            dest: destination,
+            time: trainTimeM,
+            freq: frequency,
+            next: nextArrTime,
+            mins: minutesAway
+        }
+
+
+        // Push the data to Firebase
+        database.ref().push(train);
 
 
         // Display the data in a table
@@ -100,7 +89,22 @@ $(document).ready(function() {
         $("#destination-input").val('');
         $("#time-input").val('');
         $("#frequency-input").val('');
-})
+    })
 
 
+        // Retrieve the data from Firebase and write it to the table outside of the click-event
+        database.ref().on("value", function(snapshot,) {
+            snapshot.forEach(function(childSnapshot) {
+      // console.log(childSnapshot.val().train);
+            trainName = childSnapshot.val().train;
+            destination = childSnapshot.val().dest;
+            trainTimeM = childSnapshot.val().time;
+            frequency = childSnapshot.val().freq;
+            nextArrTime = childSnapshot.val().next;
+            minutesAway= childSnapshot.val().mins;
+        
+        $("#train-table").append(`<tr><td>${trainName}</td><td>${destination}</td><td>${frequency}</td><td>${nextArrTime}</td><td>${minutesAway}</td></tr>`);
+        })
+
+    })
 });
